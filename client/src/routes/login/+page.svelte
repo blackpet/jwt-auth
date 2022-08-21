@@ -18,13 +18,16 @@
       console.log('login res', res.data)
     } catch (e: AxiosError) {
       console.log(e.response.data.message)
+      error = e.response.data.message
     }
   }
 </script>
 
 <h1>Login</h1>
+{#if error}
+<div class="error">Error: {error}</div>
+{/if}
 
-<div>credential: {JSON.stringify(credential)}</div>
 <div>
   ID: <input type="text" bind:value={credential.userId}>
 </div>
@@ -35,3 +38,10 @@
   <button on:click={login}>Login</button>
   <a href="/login/find-id">Find ID</a>
 </div>
+
+<style>
+  .error {
+    color: red;
+    font-weight: bold;
+  }
+</style>
