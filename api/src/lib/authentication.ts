@@ -1,5 +1,6 @@
 import jwt, {JwtPayload, VerifyErrors} from 'jsonwebtoken'
 import {v4 as uuid} from 'uuid'
+import {NextFunction, Request, Response} from 'express';
 
 const ACCESS_TOKEN_DURATION_SEC = 30 // 30s
 const REFRESH_TOKEN_DURATION_SEC = 60 // 1m
@@ -39,7 +40,31 @@ function verifyToken(token: string): Promise<JwtPayload | string | undefined> {
   })
 }
 
+// express middleware for authentication
+async function authenticationMiddleware(req: Request, res: Response, next: NextFunction) {
+  // get Bearer token in the `Authentication` header, skip 'Bearer ' prefix
+  const token = req.headers.authorization?.substring(7)
+
+  if (!token) {
+    console.error('Unauthorized: no token exists')
+    res.status(401).json({error: 'Unauthorized'})
+    return
+  }
+
+  try {
+    const claims = await verifyToken(token)
+    res.locals['user'] = claims
+
+    next()
+  } catch (e) {
+    console.error('Unauthorized: token verification failed')
+    res.status(401).json({error: `Unauthorized: ${(e as VerifyErrors).message}`})
+    return
+  }
+}
+
 export {
   generateToken,
   verifyToken,
+  authenticationMiddleware,
 }

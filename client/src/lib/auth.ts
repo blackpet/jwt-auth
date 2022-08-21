@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import {v4 as uuid} from 'uuid'
 
-const SECRET = 'blackpetisgeniusdeveloper'
+const SECRET = 'secret'
 const ACCESS_TOKEN_DURATION_SEC = 30 // 30s
 const REFRESH_TOKEN_DURATION_SEC = 60 // 1m
 

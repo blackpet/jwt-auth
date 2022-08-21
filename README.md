@@ -1,6 +1,9 @@
+# JWT-AUTHENTICATION
+Sveltekit 과 Express 를 이용한 JWT 인증 프로젝트
+
 # Structure
 - Sveltekit
-- Express(?)
+- Express
 
 # Features
 - [ ] [client] Login
