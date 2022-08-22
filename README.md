@@ -8,7 +8,7 @@ Sveltekit 과 Express 를 이용한 JWT 인증 프로젝트
 # Features
 - `client` Login
   - [x] error message #1
-  - [ ] axios request interceptor: append `Authentication` header
+  - [x] axios request interceptor: append `Authentication` header
   - [ ] axios response interceptor: 
     - [ ] accessToken expired, re-generate Token with refreshToken
     - [ ] re-try original request with renewed Token

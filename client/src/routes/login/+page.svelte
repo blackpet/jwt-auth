@@ -1,24 +1,22 @@
 <script lang="ts">
-  import {api} from '$lib/http';
+  import {goto} from '$app/navigation'
   import type {AxiosError} from 'axios';
+  import type {LoginCredentialRequest} from '$types/user';
+  import {signin} from '$lib/api/auth-api';
 
-  const credential = {
+  const credential: LoginCredentialRequest = {
     userId: '',
     password: '',
   }
   let error = ''
 
   async function login() {
-    console.log('login!')
-    const uri = '/login'
     try {
-      const res = await api.post(uri, credential, {
-        withCredentials: true,
-      })
-      console.log('login res', res.data)
+      await signin(credential)
+      await goto('/user')
     } catch (e: AxiosError) {
-      console.log(e.response.data.message)
-      error = e.response.data.message
+      console.debug(e, e?.response?.data?.message)
+      error = e?.response?.data?.message
     }
   }
 </script>
