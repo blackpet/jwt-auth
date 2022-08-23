@@ -1,17 +1,16 @@
-import jwt, {JwtPayload, VerifyErrors} from 'jsonwebtoken'
+import jwt, {JwtPayload, TokenExpiredError, VerifyErrors} from 'jsonwebtoken'
 import {v4 as uuid} from 'uuid'
 import {NextFunction, Request, Response} from 'express';
 
 const ACCESS_TOKEN_DURATION_SEC = 30 // 30s
 const REFRESH_TOKEN_DURATION_SEC = 60 // 1m
 
-function generateToken(userId: string) {
+function generateToken(subject: string, issuer?: string) {
   const SECRET = process.env.TOKEN_SECRET as string
 
-  const subject = uuid()
   const access = jwt.sign({
     sub: subject,
-    iss: userId,
+    iss: issuer,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_DURATION_SEC
   }, SECRET)
@@ -57,9 +56,11 @@ async function authenticationMiddleware(req: Request, res: Response, next: NextF
 
     next()
   } catch (e) {
-    console.error('Unauthorized: token verification failed')
-    res.status(401).json({error: `Unauthorized: ${(e as VerifyErrors).message}`})
-    return
+    if (e instanceof TokenExpiredError) {
+      res.status(403).json({error: e.message});
+    } else {
+      res.status(401).json({error: `Unauthorized: ${(e as VerifyErrors).message}`});
+    }
   }
 }
 

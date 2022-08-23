@@ -2,10 +2,10 @@ import './config/env-config'
 import express, {Request, Response} from 'express'
 import cors from 'cors'
 import {globalErrorHandler} from './config/error-handler';
-import ApiRouter from './routes/api-router';
 import cookieParser from 'cookie-parser';
 import {authenticationMiddleware} from './lib/authentication';
-import LoginRouter from './routes/login-router';
+import ApiRouter from './routes/api-router';
+import AuthRouter from './routes/auth-router';
 
 const port = process.env.PORT || 5100
 const app = express()
@@ -26,8 +26,8 @@ app.get('/hello', (req: Request, res: Response) => {
   res.json({message: 'hello API!'})
 })
 
-app.use('/api/login', LoginRouter)
-app.use('/api', authenticationMiddleware, ApiRouter)
+app.use('/api/v1', authenticationMiddleware, ApiRouter)
+app.use('/api/auth', AuthRouter)
 
 // error handling:: must place at last
 app.use(globalErrorHandler)
