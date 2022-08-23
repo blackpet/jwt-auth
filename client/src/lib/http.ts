@@ -2,6 +2,8 @@ import type {AxiosRequestConfig, AxiosResponse} from 'axios';
 import axios from 'axios';
 import JsCookies from 'js-cookie'
 import {browser} from '$app/env'
+import {debounce} from 'lodash';
+import type {LoginTokenResponse} from '$types/user';
 
 const AUTHORIZATION = 'Authorization'
 
@@ -17,17 +19,23 @@ const api = axios.create({
   timeout: 10000, // 10s
 })
 
+api.interceptors.request.use(requestFulfilledInterceptor)
+api.interceptors.response.use(responseFulfilledInterceptor, responseRejectedInterceptor)
+
+
 function requestFulfilledInterceptor(config: AxiosRequestConfig) {
   let token
   // client-side 인 경우만 cookie 에서 추출하여 넣어주자!
+  console.log('requestFulfilledInterceptor', browser)
   if (browser) {
-    token = JsCookies.get('X-AUTH-TOKEN')
-    console.log('requestFulfilledInterceptor token', config.headers, token);
+    token = JsCookies.get('X-AUTH-TOKEN');
     if (token) {
       config.headers![AUTHORIZATION] = 'Bearer ' + token
     }
+  } else {
+    console.log('ssr!!!', config.headers)
   }
-  return config
+  return config;
 }
 
 function responseFulfilledInterceptor(value: AxiosResponse) {
@@ -36,14 +44,68 @@ function responseFulfilledInterceptor(value: AxiosResponse) {
 }
 
 function responseRejectedInterceptor(error: any) {
-  console.log('responseRejectedInterceptor err', error)
-  return error
+  const config = error?.config
+  console.log('responseRejectedInterceptor err status', error.response.status)
+
+  // 401: Unauthorized
+  if (error?.response?.status === 401) {
+    // TODO: signout!
+    if (browser) {
+      location.replace('/login?status=401');
+    }
+    return Promise.reject(error)
+  }
+  // 403: Forbidden / expired token!!
+  else if (error?.response?.status === 403) {
+    const refresh = async (resolve: typeof Promise.resolve) => {
+      try {
+        // debounce 로 request 가 반복적으로 호출 되는 것을 막자!!
+        const tokens = await debounceRenewTokenRequest()
+        if (tokens?.access) {
+          config.headers = {
+            ...config.headers,
+            withCredentials: true,
+            [AUTHORIZATION]: 'Bearer ' + tokens.access
+          }
+        }
+
+        // complete renewal token!! re-try original request!
+        const res = await axios.request(config)
+        return resolve(Promise.resolve(res.data))
+      } catch {
+        // TODO: signout!
+        if (browser) {
+          location.replace('/login?status=403');
+        }
+        return resolve(Promise.reject(error))
+      }
+    }; // refresh
+    return new Promise(refresh);
+  }
+  return Promise.reject(error);
 
 }
 
-api.interceptors.request.use(requestFulfilledInterceptor)
-api.interceptors.response.use(responseFulfilledInterceptor, responseRejectedInterceptor)
+const debounceRenewTokenRequest = debounce(renewToken, 400, {leading: true, trailing: false})
 
+async function renewToken(): Promise<LoginTokenResponse | undefined> {
+  const _refresh = JsCookies.get('REFRESH-TOKEN')
+
+  try {
+    const res = await api.post('/auth/refresh',
+      {token: _refresh},
+      {headers: {
+          withCredentials: true
+      }}
+    )
+    console.log('renew token', res.data)
+    return res.data
+
+  } catch (error) {
+    // TODO: logout 처리!
+    console.error('token renewal failed!')
+  }
+}
 
 
 export {

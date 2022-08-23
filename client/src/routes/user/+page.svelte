@@ -7,3 +7,4 @@
 </script>
 
 <h2>Welcome Admin: {data?.iss}</h2>
+<div>data: {JSON.stringify(data)}</div>
