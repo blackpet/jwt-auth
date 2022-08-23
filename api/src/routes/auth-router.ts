@@ -10,7 +10,7 @@ router.post('/login', (req: Request, res: Response) => {
 
   // TODO: validate credential
   if (data.userId !== 'admin') {
-    res.status(401).json({message: 'invalid credential!'})
+    res.status(401).json({message: '[/auth/login] invalid credential!'})
     return
   }
 
@@ -43,7 +43,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     res.json(newTokens)
   } catch (e) {
-    res.status(401).json({error: `Unauthorized: ${(e as VerifyErrors).message}`})
+    res.status(401).json({error: `[/auth/refresh] Unauthorized: ${(e as VerifyErrors).message}`})
     return
   }
 })
