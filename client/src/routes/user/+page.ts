@@ -1,5 +1,5 @@
 import {getUser} from '$lib/api/auth-api';
-import {error} from '@sveltejs/kit';
+import {error, redirect} from '@sveltejs/kit';
 import type {LoadEvent, ServerLoadEvent} from '@sveltejs/kit';
 import {browser} from '$app/env';
 
@@ -11,5 +11,6 @@ export async function load(event: LoadEvent | ServerLoadEvent) {
   const claims = await getUser()
   if (claims) return claims
 
-  return error(404, 'Not found')
+  // throw error(404, 'Not found')
+  throw redirect(307, '/login')
 }

@@ -26,8 +26,8 @@ app.get('/hello', (req: Request, res: Response) => {
   res.json({message: 'hello API!'})
 })
 
-app.use('/api/v1', authenticationMiddleware, ApiRouter)
-app.use('/api/auth', AuthRouter)
+app.use('/api/v2/auth', AuthRouter)
+app.use('/api/v2', authenticationMiddleware, ApiRouter)
 
 // error handling:: must place at last
 app.use(globalErrorHandler)

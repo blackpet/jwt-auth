@@ -1,6 +1,6 @@
 import express, {Request, Response} from 'express';
 import {generateToken, verifyToken} from '../lib/authentication';
-import {JwtPayload, TokenExpiredError, VerifyErrors} from 'jsonwebtoken';
+import {JwtPayload, VerifyErrors} from 'jsonwebtoken';
 import {v4 as uuid} from 'uuid';
 
 const router = express.Router()

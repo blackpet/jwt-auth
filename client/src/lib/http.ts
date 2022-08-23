@@ -14,13 +14,21 @@ axios.defaults.headers.delete['Content-Type'] = 'application/json'
 
 export default axios
 
-const api = axios.create({
+// ------------- client API (v1) ----------------
+const v1 = axios.create({
+  baseURL: '/api/v1',
+  timeout: 10000, // 10s
+})
+
+
+// ------------- server API (v2) ----------------
+const v2 = axios.create({
   baseURL: import.meta.env.VITE_API_RESOURCE,
   timeout: 10000, // 10s
 })
 
-api.interceptors.request.use(requestFulfilledInterceptor)
-api.interceptors.response.use(responseFulfilledInterceptor, responseRejectedInterceptor)
+v2.interceptors.request.use(requestFulfilledInterceptor)
+v2.interceptors.response.use(responseFulfilledInterceptor, responseRejectedInterceptor)
 
 
 function requestFulfilledInterceptor(config: AxiosRequestConfig) {
@@ -92,7 +100,7 @@ async function renewToken(): Promise<LoginTokenResponse | undefined> {
   const _refresh = JsCookies.get('REFRESH-TOKEN')
 
   try {
-    const res = await api.post('/auth/refresh',
+    const res = await v2.post('/auth/refresh',
       {token: _refresh},
       {headers: {
           withCredentials: true
@@ -109,5 +117,6 @@ async function renewToken(): Promise<LoginTokenResponse | undefined> {
 
 
 export {
-  api,
+  v1,
+  v2,
 }
