@@ -1,5 +1,5 @@
 import type {AxiosRequestConfig, AxiosResponse} from 'axios';
-import axios from 'axios';
+import axios, {AxiosError} from 'axios';
 import JsCookies from 'js-cookie'
 import {browser} from '$app/env'
 import {debounce} from 'lodash';
@@ -28,7 +28,7 @@ const v2 = axios.create({
 })
 
 v2.interceptors.request.use(requestFulfilledInterceptor)
-v2.interceptors.response.use(responseFulfilledInterceptor, responseRejectedInterceptor)
+v2.interceptors.response.use(res => res, responseRejectedInterceptor)
 
 
 function requestFulfilledInterceptor(config: AxiosRequestConfig) {
@@ -41,7 +41,7 @@ function requestFulfilledInterceptor(config: AxiosRequestConfig) {
       config.headers![AUTHORIZATION] = 'Bearer ' + token
     }
   } else {
-    console.log('ssr!!!', config.headers)
+    console.log('ssr!!!', config)
   }
   return config;
 }
@@ -51,12 +51,13 @@ function responseFulfilledInterceptor(value: AxiosResponse) {
   return value
 }
 
-function responseRejectedInterceptor(error: any) {
-  const config = error?.config
-  console.log('responseRejectedInterceptor err status', error.response.status)
+function responseRejectedInterceptor(error: AxiosError) {
+  const config = error.config
+  console.log('responseRejectedInterceptor err req', error.request)
+  // console.log('responseRejectedInterceptor err res', error.response)
 
   // 401: Unauthorized
-  if (error?.response?.status === 401) {
+  if (error.response?.status === 401) {
     // TODO: signout!
     if (browser) {
       location.replace('/login?status=401');
@@ -64,11 +65,12 @@ function responseRejectedInterceptor(error: any) {
     return Promise.reject(error)
   }
   // 403: Forbidden / expired token!!
-  else if (error?.response?.status === 403) {
+  else if (error.response?.status === 403) {
     const refresh = async (resolve: typeof Promise.resolve) => {
       try {
         // debounce 로 request 가 반복적으로 호출 되는 것을 막자!!
         const tokens = await debounceRenewTokenRequest()
+        console.log('renewal tokens', tokens)
         if (tokens?.access) {
           config.headers = {
             ...config.headers,
@@ -85,6 +87,7 @@ function responseRejectedInterceptor(error: any) {
         if (browser) {
           location.replace('/login?status=403');
         }
+        console.log('refresh 하다 뻑남. 짱남.')
         return resolve(Promise.reject(error))
       }
     }; // refresh
@@ -97,7 +100,12 @@ function responseRejectedInterceptor(error: any) {
 const debounceRenewTokenRequest = debounce(renewToken, 400, {leading: true, trailing: false})
 
 async function renewToken(): Promise<LoginTokenResponse | undefined> {
-  const _refresh = JsCookies.get('REFRESH-TOKEN')
+  let _refresh
+  if (browser) {
+    _refresh = JsCookies.get('REFRESH-TOKEN');
+  } else {
+
+  }
 
   try {
     const res = await v2.post('/auth/refresh',

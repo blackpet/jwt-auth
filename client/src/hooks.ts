@@ -7,7 +7,7 @@ export async function handle(
 ): Promise<Response> {
 
   const response = await resolve(event);
-  console.log(v2.defaults.headers)
+  // console.log(v2.defaults.headers)
 
   // const token = Cookie.parse(event.request?.headers?.get('cookie') ?? '')
   // console.log('-=-=-=-=-=-=-=-=- hooks token\n', token, '\naccess', token['X-AUTH-TOKEN'])
@@ -26,7 +26,7 @@ export async function handle(
 export function handleError({error, event}: { error: Error & { frame?: string }; event: RequestEvent }) {
   console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%% handleError %%%%%%%%%%%%%%%%%%%%%%')
   console.log('error', error)
-  console.log('event', event)
+  // console.log('event', event)
   console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%% // handleError %%%%%%%%%%%%%%%%%%%%%%')
 
 }

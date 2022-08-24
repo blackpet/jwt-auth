@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="api:5100" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/api/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="dev" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs>
+      <env name="DEBUG" value="api:*" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

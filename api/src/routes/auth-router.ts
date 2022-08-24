@@ -10,7 +10,7 @@ router.post('/login', (req: Request, res: Response) => {
 
   // TODO: validate credential
   if (data.userId !== 'admin') {
-    res.status(401).json({message: '[/auth/login] invalid credential!'})
+    res.status(401).json({message: 'invalid credential!'})
     return
   }
 
