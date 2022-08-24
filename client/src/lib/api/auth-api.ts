@@ -29,7 +29,16 @@ async function getUser(): Promise<UserClaimsResponse> {
   return await res.json()
 }
 
+async function hello(): Promise<any> {
+  const res = await fetch('http://localhost:5100/hello')
+  let data = await res.json()
+  console.log('hello', data)
+
+  return data
+}
+
 export {
   signin,
   getUser,
+  hello,
 }

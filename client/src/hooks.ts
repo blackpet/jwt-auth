@@ -1,10 +1,13 @@
 import type {RequestEvent, ResolveOptions} from '@sveltejs/kit';
 import Cookie from 'cookie'
 import {v2} from './lib/http';
+import './lib/fetch/init-fetch'
 
 export async function handle(
   {event, resolve}: {event: RequestEvent, resolve: (event: RequestEvent, opts?: ResolveOptions) => Promise<Response>}
 ): Promise<Response> {
+
+  console.log('hooks handle!!!!!')
 
   const response = await resolve(event);
   // console.log(v2.defaults.headers)
