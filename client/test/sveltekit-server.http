@@ -1,0 +1,27 @@
+POST http://localhost:5173/api/v1/login
+Content-Type: application/json
+
+{
+  "userId": "admin",
+  "password": "b"
+}
+
+###
+
+POST http://localhost:5100/api/v2/user
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2N2U1YzQ1ZS0xYjZmLTQwYWEtYTBlNy1lMTMzZWQzNjJkNTAiLCJpc3MiOiJhZG1pbiIsImlhdCI6MTY2MTMwNDY1NywiZXhwIjoxNjYxMzA0Njg3fQ.4epLH8P8dFqM3VLhEVndqkDpZmeE35yoHMLnhSsKNOk
+
+
+###
+
+POST http://localhost:5100/api/v2/auth/login
+Content-Type: application/json
+
+{
+  "userId": "a",
+  "password": "b"
+}
+
+###
+

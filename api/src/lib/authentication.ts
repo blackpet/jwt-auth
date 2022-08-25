@@ -1,9 +1,8 @@
 import jwt, {JwtPayload, TokenExpiredError, VerifyErrors} from 'jsonwebtoken'
-import {v4 as uuid} from 'uuid'
 import {NextFunction, Request, Response} from 'express';
 
-const ACCESS_TOKEN_DURATION_SEC = 30 // 30s
-const REFRESH_TOKEN_DURATION_SEC = 60 // 1m
+const ACCESS_TOKEN_DURATION_SEC = 10 // 20s
+const REFRESH_TOKEN_DURATION_SEC = 20 // 1m
 
 function generateToken(subject: string, issuer?: string) {
   const SECRET = process.env.TOKEN_SECRET as string
@@ -42,7 +41,14 @@ function verifyToken(token: string): Promise<JwtPayload | string | undefined> {
 // express middleware for authentication
 async function authenticationMiddleware(req: Request, res: Response, next: NextFunction) {
   // get Bearer token in the `Authentication` header, skip 'Bearer ' prefix
-  const token = req.headers.authorization?.substring(7)
+  let token = req.headers.authorization?.substring(7)
+
+  // console.log('auth middleware token', token, '\n==================req', req, '\n==================req.cookies', req.cookies)
+  // sveltekit server-side request 인 경우 `X-AUTH-TOKEN` cookie 에서 가져와야 한다!
+  if (!token && 'X-AUTH-TOKEN' in req.cookies) {
+    token = req.cookies['X-AUTH-TOKEN']
+    console.log('token from cookie!', token)
+  }
 
   if (!token) {
     console.error('Unauthorized: no token exists')

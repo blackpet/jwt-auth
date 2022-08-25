@@ -1,6 +1,5 @@
 <script lang="ts">
   import {goto} from '$app/navigation'
-  import type {AxiosError} from 'axios';
   import type {LoginCredentialRequest} from '$types/user';
   import {signin} from '$lib/api/auth-api';
 
@@ -14,9 +13,9 @@
     try {
       await signin(credential)
       await goto('/user')
-    } catch (e: AxiosError) {
-      console.debug(e, e?.response?.data?.message)
-      error = e?.response?.data?.message
+    } catch (e: any) {
+      console.log('login failed!', e)
+      error = e.message
     }
   }
 </script>
