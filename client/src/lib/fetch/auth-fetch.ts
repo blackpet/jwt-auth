@@ -1,9 +1,7 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
-import Cookie from 'cookie';
 import {error, redirect} from '@sveltejs/kit';
-
-type AuthRequestInit = RequestInit & {baseURL?: string}
-type RequestMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
+import Cookie from 'cookie';
+import type {AuthRequestInit, RequestMethod} from '$types/fetch';
 
 const AUTHORIZATION = 'Authorization'
 

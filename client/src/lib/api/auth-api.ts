@@ -1,16 +1,16 @@
-import type {LoginCredentialRequest, LoginTokenResponse, UserClaimsResponse} from '$types/user';
-import JsCookies from 'js-cookie';
+import type {LoginCredentialRequest, LoginTokenResponse} from '$types/user';
+import {clientFetch} from '../fetch/client-fetch';
+import type {ServerLoadEvent} from '@sveltejs/kit';
+import {authFetch} from '../fetch/auth-fetch';
 
 async function signin(request: LoginCredentialRequest): Promise<LoginTokenResponse> {
-  // const res = await v1.post('/login', request, {
-  //   withCredentials: true,
+  // const res = await fetch('http://localhost:5100/api/v2/auth/login', {
+  //   method: 'POST',
+  //   headers: {'Content-Type': 'application/json'},
+  //   body: JSON.stringify(request),
+  //   credentials: 'include',
   // })
-  const res = await fetch('http://localhost:5100/api/v2/auth/login', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(request),
-    credentials: 'include',
-  })
+  const res = await clientFetch.post('/auth/login', request, {credentials: 'include',})
   const data = await res.json();
 
   if (res.status !== 200) {
@@ -21,24 +21,25 @@ async function signin(request: LoginCredentialRequest): Promise<LoginTokenRespon
   return data
 }
 
-async function getUser(): Promise<UserClaimsResponse> {
-  // const res = await v2.get('/user')
-  const res = await fetch('http://localhost:5100/api/v2/user', {
-    headers: {'Authorization': `Bearer ${JsCookies.get('X-AUTH-TOKEN')}`},
-  })
-  return await res.json()
+async function hello_client(): Promise<any> {
+  const res = await clientFetch.get('/hello')
+  console.log('hello_client res', res)
+  let data = await res.json()
+  console.log('hello_client', data)
+
+  return data
 }
 
-async function hello(): Promise<any> {
-  const res = await fetch('http://localhost:5100/hello')
+async function hello_server(event: ServerLoadEvent): Promise<any> {
+  const res = await authFetch.get(event, '/hello')
   let data = await res.json()
-  console.log('hello', data)
+  console.log('hello_server', data)
 
   return data
 }
 
 export {
   signin,
-  getUser,
-  hello,
+  hello_client,
+  hello_server,
 }
