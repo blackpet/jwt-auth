@@ -1,9 +1,8 @@
 import jwt, {JwtPayload, TokenExpiredError, VerifyErrors} from 'jsonwebtoken'
-import {v4 as uuid} from 'uuid'
 import {NextFunction, Request, Response} from 'express';
 
-const ACCESS_TOKEN_DURATION_SEC = 20 // 20s
-const REFRESH_TOKEN_DURATION_SEC = 60 // 1m
+const ACCESS_TOKEN_DURATION_SEC = 10 // 20s
+const REFRESH_TOKEN_DURATION_SEC = 20 // 1m
 
 function generateToken(subject: string, issuer?: string) {
   const SECRET = process.env.TOKEN_SECRET as string

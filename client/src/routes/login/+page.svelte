@@ -1,6 +1,5 @@
 <script lang="ts">
   import {goto} from '$app/navigation'
-  import type {AxiosError} from 'axios';
   import type {LoginCredentialRequest} from '$types/user';
   import {signin} from '$lib/api/auth-api';
 

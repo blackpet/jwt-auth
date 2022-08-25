@@ -1,72 +1,11 @@
-import {getUser} from '$lib/api/auth-api';
-import {error, redirect} from '@sveltejs/kit';
-import type {LoadEvent, ServerLoadEvent} from '@sveltejs/kit';
-import {browser} from '$app/env';
-import JsCookies from 'js-cookie';
-import Cookie from 'cookie';
-import {authFetch} from '../../lib/fetch/auth-fetch';
+import type {ServerLoadEvent} from '@sveltejs/kit';
+import {redirect} from '@sveltejs/kit';
+import {authFetch} from '$lib/fetch/auth-fetch';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({request, setHeaders}: ServerLoadEvent) {
-  let uri = '/user';
-  // let uri = 'http://localhost:5100/api/v2/user';
-  const cookie = Cookie.parse(request.headers.get('cookie') ?? '')
-  const AUTHORIZATION_HEADER = {'Authorization': `Bearer ${cookie['X-AUTH-TOKEN']}`} ?? undefined
-  const res = await authFetch.get(uri, {
-    headers: AUTHORIZATION_HEADER,
-  })
-  console.log('+page.server.js res', '\n=============status', res.status, res.ok);
-
-  // request occur error!!
-  if (!res.ok) {
-    if (res.status === 403) {
-      console.log('================================== Forbidden!! (expired token) ==============================')
-      // refresh token!
-      const refresh_res = await authFetch.post('/auth/refresh', {token: cookie['REFRESH-TOKEN']}, {
-        headers: {...AUTHORIZATION_HEADER},
-        credentials: 'include',
-      })
-      console.log('refresh_res res', '\n=============status', refresh_res.status, refresh_res.ok);
-
-      if (!refresh_res.ok) {
-        if (refresh_res.status === 401) {
-          // remove tokens
-          setHeaders({
-            'set-cookie': [
-              Cookie.serialize('X-AUTH-TOKEN', 'deleted', {path: '/', expires: new Date(1970,0,1)}),
-              Cookie.serialize('REFRESH-TOKEN', 'deleted', {path: '/', expires: new Date(1970,0,1)})
-            ]
-          })
-          throw redirect(307, '/login?status=401');
-        } else {
-          throw error(500, refresh_res.statusText)
-        }
-      }
-
-      const tokens = await refresh_res.json();
-      console.log('----refresh tokens-----', tokens)
-      setHeaders({
-        'set-cookie': [
-          Cookie.serialize('X-AUTH-TOKEN', tokens.access, {path: '/'}),
-          Cookie.serialize('REFRESH-TOKEN', tokens.refresh, {path: '/'})
-        ]
-      })
-
-      // re-try original request
-      const res = await authFetch.get(uri, {
-        headers: {'Authorization': `Bearer ${tokens.access}`},
-      })
-      const claims = await res.json();
-      if (claims) return claims
-    } // 403
-
-    // 403 아니면 error!
-    throw error(500, res.statusText)
-  } // !res.ok
-
-
+export async function load(event: ServerLoadEvent) {
+  const res = await authFetch.get(event, '/user')
   const claims = await res.json();
-  // const claims = await getUser()
   if (claims) return claims
 
   // throw error(404, 'Not found')

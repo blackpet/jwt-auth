@@ -1,6 +1,11 @@
 import type {ServerLoadEvent} from '@sveltejs/kit';
+import Cookie from 'cookie';
+import {error, redirect} from '@sveltejs/kit';
 
 type AuthRequestInit = RequestInit & {baseURL?: string}
+type RequestMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
+
+const AUTHORIZATION = 'Authorization'
 
 class AuthFetch {
   #baseOptions?: AuthRequestInit
@@ -35,7 +40,7 @@ class AuthFetch {
   }
 
   async get(event: ServerLoadEvent, uri: string, option?: AuthRequestInit) {
-    return await fetch(this.#baseURL + uri, {...this.#baseOptions, ...option})
+    return await this.request(event, 'GET', uri, undefined, option)
   }
 
   async post(event: ServerLoadEvent, uri: string, body: any | null, option?: AuthRequestInit) {
@@ -54,15 +59,87 @@ class AuthFetch {
     return await this.request(event, 'DELETE', uri, body, option)
   }
 
-  async request({request, setHeaders}: ServerLoadEvent, method: string = 'POST', uri: string, body?: any | null, option?: AuthRequestInit) {
-    return await fetch(this.#baseURL + uri, {
-      method: 'POST',
+  async request(event: ServerLoadEvent, method: string = 'POST', uri: string, body?: any | null, option?: AuthRequestInit): Promise<Response> {
+    const {request} = event
+    // auth token from cookie
+    const cookie = Cookie.parse(request.headers.get('cookie') ?? '')
+    const AUTHORIZATION_HEADER = cookie && cookie['X-AUTH-TOKEN'] && {[AUTHORIZATION]: `Bearer ${cookie['X-AUTH-TOKEN']}`}
+
+    const _option = {
       ...this.#baseOptions,
       ...option,
-      headers: {...this.#defaultMethodHeaders.post, ...(this.#baseOptions?.headers ?? {}), ...(option?.headers ?? {})},
-      body: typeof body === 'object' ? JSON.stringify(body) : body
+      method,
+      headers: {
+        ...this.#defaultMethodHeaders.post,
+        ...(this.#baseOptions?.headers ?? {}),
+        ...(AUTHORIZATION_HEADER || {}),
+        ...(option?.headers ?? {}),
+      },
+      ...(method !== 'GET' && {body: typeof body === 'object' ? JSON.stringify(body) : body})
+    }
+    console.log('_option', _option)
+    const res = await fetch(this.#baseURL + uri, _option)
+    console.log('\n=============request res.status, res.ok', res.status, res.ok);
+
+    // !!!!!!!!! ok !!!!!!!!!!
+    if (res.ok) return res
+
+    // 401 이면 refresh token expired!
+    if(res.status === 401) throw redirect(307, '/login?status=401')
+    // 401, 403 아니면 error!
+    if (res.status !== 403) throw error(res.status, res.statusText)
+
+    // refresh token
+    const tokens = await this.refreshToken(event, res, (AUTHORIZATION_HEADER || {}));
+    console.log('----refresh tokens-----', tokens)
+
+    // re-try original request
+    const res2 = await this[method.toLowerCase() as RequestMethod](event, uri, {
+      headers: {'Authorization': `Bearer ${tokens.access}`},
     })
+
+    return res2
+  }
+
+  async refreshToken(event: ServerLoadEvent, res: Response, AUTHORIZATION_HEADER: any) {
+    const {request, setHeaders} = event
+
+
+    // ------- 403: refresh token ---------
+    console.log('================================== Forbidden!! (expired token) ==============================')
+    const cookie = Cookie.parse(request.headers.get('cookie') ?? '')
+    // refresh token!
+    const refresh_res = await this.post(event, '/auth/refresh', {token: cookie['REFRESH-TOKEN']}, {
+      headers: {...AUTHORIZATION_HEADER},
+      credentials: 'include',
+    })
+    console.log('\n=============refresh_res status ok', refresh_res.status, refresh_res.ok);
+
+    // invalid or expired refresh token!
+    if (!refresh_res.ok) {
+      // remove tokens
+      setHeaders({
+        'set-cookie': [
+          Cookie.serialize('X-AUTH-TOKEN', 'deleted', {path: '/', expires: new Date(1970, 0, 1)}),
+          Cookie.serialize('REFRESH-TOKEN', 'deleted', {path: '/', expires: new Date(1970, 0, 1)})
+        ]
+      })
+
+      if (refresh_res.status !== 401) throw error(500, refresh_res.statusText)
+      throw redirect(307, '/login?status=401')
+    }
+
+    const tokens = await refresh_res.json()
+    setHeaders({
+      'set-cookie': [
+        Cookie.serialize('X-AUTH-TOKEN', tokens.access, {path: '/'}),
+        Cookie.serialize('REFRESH-TOKEN', tokens.refresh, {path: '/'})
+      ]
+    })
+
+    return tokens;
   }
 }
+
 
 export let authFetch = new AuthFetch()
