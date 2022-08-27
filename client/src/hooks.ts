@@ -1,13 +1,17 @@
 import type {RequestEvent, ResolveOptions} from '@sveltejs/kit';
 import Cookie from 'cookie'
-import {v2} from './lib/http';
-import './lib/fetch/init-fetch'
+import {clientFetch} from './lib/fetch/client-fetch';
 
+/** @type {import('@sveltejs/kit').Handle} */
 export async function handle(
   {event, resolve}: {event: RequestEvent, resolve: (event: RequestEvent, opts?: ResolveOptions) => Promise<Response>}
 ): Promise<Response> {
-
   console.log('hooks handle!!!!!')
+  const request = event.request
+  const cookie = Cookie.parse(request.headers.get('cookie') ?? '')
+  cookie?.['X-AUTH-TOKEN'] && clientFetch.setBaseOptions({
+    headers: {'Authorization': `Bearer ${cookie['X-AUTH-TOKEN']}`}
+  })
 
   const response = await resolve(event);
   // console.log(v2.defaults.headers)

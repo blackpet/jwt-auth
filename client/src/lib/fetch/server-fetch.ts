@@ -1,13 +1,12 @@
+import {API_RESOURCE} from '$env/static/private'
 import type {ServerLoadEvent} from '@sveltejs/kit';
-import Cookie from 'cookie';
 import {error, redirect} from '@sveltejs/kit';
-
-type AuthRequestInit = RequestInit & {baseURL?: string}
-type RequestMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
+import Cookie from 'cookie';
+import type {AuthRequestInit, PostRequestMethod, RequestMethod} from '$types/fetch';
 
 const AUTHORIZATION = 'Authorization'
 
-class AuthFetch {
+class ServerFetch {
   #baseOptions?: AuthRequestInit
   #baseURL?: string = ''
   #defaultMethodHeaders = {
@@ -63,14 +62,14 @@ class AuthFetch {
     const {request} = event
     // auth token from cookie
     const cookie = Cookie.parse(request.headers.get('cookie') ?? '')
-    const AUTHORIZATION_HEADER = cookie && cookie['X-AUTH-TOKEN'] && {[AUTHORIZATION]: `Bearer ${cookie['X-AUTH-TOKEN']}`}
+    const AUTHORIZATION_HEADER = cookie?.['X-AUTH-TOKEN'] && {[AUTHORIZATION]: `Bearer ${cookie['X-AUTH-TOKEN']}`}
 
     const _option = {
       ...this.#baseOptions,
       ...option,
       method,
       headers: {
-        ...this.#defaultMethodHeaders.post,
+        ...this.#defaultMethodHeaders[method.toLowerCase() as PostRequestMethod],
         ...(this.#baseOptions?.headers ?? {}),
         ...(AUTHORIZATION_HEADER || {}),
         ...(option?.headers ?? {}),
@@ -142,4 +141,7 @@ class AuthFetch {
 }
 
 
-export let authFetch = new AuthFetch()
+export let serverFetch = new ServerFetch()
+serverFetch.setBaseOptions({
+  baseURL: API_RESOURCE
+})

@@ -1,3 +1,7 @@
+<script lang="ts">
+
+</script>
+
 <h1>Layout</h1>
 <ul>
   <li><a href="/">Home</a></li>

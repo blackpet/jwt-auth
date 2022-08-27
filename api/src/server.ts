@@ -22,7 +22,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 // route
-app.get('/hello', (req: Request, res: Response) => {
+app.get('/api/v2/hello', (req: Request, res: Response) => {
   res.json({message: 'hello API!'})
 })
 
