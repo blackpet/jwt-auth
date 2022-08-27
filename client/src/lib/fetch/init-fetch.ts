@@ -1,11 +1,10 @@
-import {authFetch} from './auth-fetch';
+import {serverFetch} from './server-fetch';
 import {API_RESOURCE} from '$env/static/private'
 import {clientFetch} from './client-fetch';
 
-authFetch.setBaseOptions({
+serverFetch.setBaseOptions({
   baseURL: API_RESOURCE
 })
 clientFetch.setBaseOptions({
-  baseURL: import.meta.env.VITE_API_RESOURCE
+  baseURL: API_RESOURCE || import.meta.env.VITE_API_RESOURCE
 })
-console.log('init-fetch!', API_RESOURCE, import.meta.env.VITE_API_RESOURCE)

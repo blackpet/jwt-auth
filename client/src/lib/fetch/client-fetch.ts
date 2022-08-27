@@ -1,5 +1,8 @@
+import {browser} from '$app/env'
+import {API_RESOURCE} from '$env/static/private'
 import type {AuthRequestInit, RequestMethod} from '$types/fetch';
 import JsCookies from 'js-cookie';
+import {redirect} from '@sveltejs/kit';
 
 const AUTHORIZATION = 'Authorization'
 
@@ -27,12 +30,19 @@ class ClientFetch {
 
   setBaseOptions(config: AuthRequestInit) {
     if (!config?.baseURL) {
-      this.#baseOptions = config
+      this.#baseOptions = {
+        ...this.#baseOptions, ...config,
+        headers: {...this.#baseOptions?.headers, ...config?.headers}
+      }
     } else {
       const {baseURL, ...rest} = config
-      this.#baseOptions = rest
+      this.#baseOptions = {
+        ...this.#baseOptions, ...rest,
+        headers: {...this.#baseOptions?.headers, ...rest?.headers}
+      }
       this.#baseURL = baseURL
     }
+    console.log('baseURL, baseOptions', this.#baseURL, this.#baseOptions)
   }
 
   async get(uri: string, option?: AuthRequestInit) {
@@ -57,7 +67,6 @@ class ClientFetch {
 
   async request(method: string = 'POST', uri: string, body?: any | null, option?: AuthRequestInit): Promise<Response> {
     // auth token from cookie
-    console.log('[client] request token')
     const token = JsCookies.get('X-AUTH-TOKEN')
     const AUTHORIZATION_HEADER = token && {[AUTHORIZATION]: `Bearer ${token}`}
 
@@ -73,15 +82,21 @@ class ClientFetch {
       },
       ...(method !== 'GET' && {body: typeof body === 'object' ? JSON.stringify(body) : body})
     }
-    console.log('_option', _option)
+    console.log('\n=============[client]before request baseURL', this.#baseURL);
     const res = await fetch(this.#baseURL + uri, _option)
-    console.log('\n=============[client]request res.status, res.ok', res.status, res.ok);
+    console.log('\n=============[client]request baseURL, res.status, res.ok', this.#baseURL, res.status, res.ok);
 
     // !!!!!!!!! ok !!!!!!!!!!
     if (res.ok) return res
 
     // 401 이면 refresh token expired!
-    if(res.status === 401) location.replace('/login?status=401')
+    if(res.status === 401) {
+      if (browser) {
+        location.replace('/login?status=401')
+      } else {
+        redirect(307, '/login?status=401')
+      }
+    }
     // 401, 403 아니면 error!
     if (res.status !== 403) {
       return Promise.reject({status: res.status, statusText: res.statusText, ...(await res.json()),})
@@ -114,7 +129,13 @@ class ClientFetch {
     if (!refresh_res.ok) {
 
       if (refresh_res.status !== 401) return Promise.reject({status: res.status, statusText: res.statusText, ...(await res.json()),})
-      location.replace('/login?status=401')
+
+      // 401
+      if (browser) {
+        location.replace('/login?status=401')
+      } else {
+        redirect(307, '/login?status=401')
+      }
     }
 
     const tokens = await refresh_res.json()
@@ -124,3 +145,6 @@ class ClientFetch {
 
 
 export let clientFetch = new ClientFetch()
+clientFetch.setBaseOptions({
+  baseURL: API_RESOURCE || import.meta.env.VITE_API_RESOURCE
+})

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import '$lib/fetch/init-fetch'
+
 </script>
 
 <h1>Layout</h1>
