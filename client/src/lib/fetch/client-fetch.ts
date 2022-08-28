@@ -42,7 +42,6 @@ class ClientFetch {
       }
       this.#baseURL = baseURL
     }
-    console.log('baseURL, baseOptions', this.#baseURL, this.#baseOptions)
   }
 
   async get(uri: string, option?: AuthRequestInit) {
@@ -82,9 +81,7 @@ class ClientFetch {
       },
       ...(method !== 'GET' && {body: typeof body === 'object' ? JSON.stringify(body) : body})
     }
-    console.log('\n=============[client]before request baseURL', this.#baseURL);
     const res = await fetch(this.#baseURL + uri, _option)
-    console.log('\n=============[client]request baseURL, res.status, res.ok', this.#baseURL, res.status, res.ok);
 
     // !!!!!!!!! ok !!!!!!!!!!
     if (res.ok) return res
@@ -104,7 +101,6 @@ class ClientFetch {
 
     // refresh token
     const tokens = await this.refreshToken(res, (AUTHORIZATION_HEADER || {}));
-    console.log('----refresh tokens-----', tokens)
 
     // re-try original request
     const res2 = await this[method.toLowerCase() as RequestMethod](uri, {
@@ -116,14 +112,12 @@ class ClientFetch {
 
   async refreshToken(res: Response, AUTHORIZATION_HEADER: any) {
     // ------- 403: refresh token ---------
-    console.log('================================== [client]Forbidden!! (expired token) ==============================')
     const token = JsCookies.get('REFRESH-TOKEN')
     // refresh token!
     const refresh_res = await this.post('/auth/refresh', {token: token}, {
       headers: {...AUTHORIZATION_HEADER},
       credentials: 'include',
     })
-    console.log('\n=============[client]refresh_res status ok', refresh_res.status, refresh_res.ok);
 
     // invalid or expired refresh token!
     if (!refresh_res.ok) {

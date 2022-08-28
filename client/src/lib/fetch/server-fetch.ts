@@ -76,9 +76,7 @@ class ServerFetch {
       },
       ...(method !== 'GET' && {body: typeof body === 'object' ? JSON.stringify(body) : body})
     }
-    console.log('_option', _option)
     const res = await fetch(this.#baseURL + uri, _option)
-    console.log('\n=============request res.status, res.ok', res.status, res.ok);
 
     // !!!!!!!!! ok !!!!!!!!!!
     if (res.ok) return res
@@ -90,7 +88,6 @@ class ServerFetch {
 
     // refresh token
     const tokens = await this.refreshToken(event, res, (AUTHORIZATION_HEADER || {}));
-    console.log('----refresh tokens-----', tokens)
 
     // re-try original request
     const res2 = await this[method.toLowerCase() as RequestMethod](event, uri, {
@@ -105,14 +102,12 @@ class ServerFetch {
 
 
     // ------- 403: refresh token ---------
-    console.log('================================== Forbidden!! (expired token) ==============================')
     const cookie = Cookie.parse(request.headers.get('cookie') ?? '')
     // refresh token!
     const refresh_res = await this.post(event, '/auth/refresh', {token: cookie['REFRESH-TOKEN']}, {
       headers: {...AUTHORIZATION_HEADER},
       credentials: 'include',
     })
-    console.log('\n=============refresh_res status ok', refresh_res.status, refresh_res.ok);
 
     // invalid or expired refresh token!
     if (!refresh_res.ok) {
