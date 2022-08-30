@@ -25,7 +25,7 @@
 <div class="error">Error: {error}</div>
 {/if}
 
-<div>
+<div class="field">
   ID: <input type="text" bind:value={credential.userId}>
 </div>
 <div>
@@ -41,4 +41,8 @@
     color: red;
     font-weight: bold;
   }
+  input {
+    @apply border border-gray-300 rounded;
+  }
+  .field {@apply my-2;}
 </style>
